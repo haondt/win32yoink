@@ -1,0 +1,23 @@
+[package]
+name = "win32yoink"
+version = "0.1.0"
+authors = ["Noah Burghardt <burghardtnoah@gmail.com>"]
+license = "MIT"
+description = "A windows clipboard tool"
+edition = "2021"
+readme = "./README.md"
+homepage = "https://github.com/haondt/win32yoink"
+repository = "https://github.com/haondt/win32yoink"
+keywords = ["cli", "clipboard", "tools"]
+categories = ["command-line-utilities"]
+
+[[bin]]
+name = "win32yoink"
+path = "src/main.rs"
+
+
+[profile.release]
+strip = true
+
+[dependencies]
+clipboard-win = "=5.3.0"
