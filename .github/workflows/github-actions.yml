@@ -1,0 +1,68 @@
+name: Build and Release
+
+on:
+  release:
+    types: [published]
+    tags: ['v*.*.*']
+
+jobs:
+  release:
+    permissions:
+      contents: write
+    name: Release - ${{ matrix.platform.os_name }}
+    runs-on: ${{ matrix.platform.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          # - os_name: linux-x86_64
+          #   target: x86_64-unknown-linux-gnu
+          #   bin: win32yoink
+          #   os: ubuntu-latest
+          #   asset_type: tar.gz
+          - os_name: windows-x86_64
+            os: windows-latest
+            target: x86_64-pc-windows-msvc
+            bin: win32yoink.exe
+            asset_type: zip
+          # - os_name: osx-x86_64
+          #   target: x86_64-apple-darwin
+          #   bin: win32yoink
+    steps:
+      - uses: actions/checkout@v3
+      - name: Get release
+        id: get_release
+        uses: bruceadams/get-release@v1.3.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Cache cargo & target directories
+        uses: Swatinem/rust-cache@v2
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: ${{ matrix.platform.target }}
+          override: true
+      - name: install cross
+        run: cargo install cross
+      - name: build project
+        run: cross build --release --locked --target ${{ matrix.platform.target }}
+      - name: compress binary
+        shell: bash
+        run: |
+          cd ./target/${{ matrix.platform.target }}/release
+          if [[ "${{ matrix.platform.os }}" == "windows-latest" ]]; then
+            7z a win32yoink-${{ matrix.platform.os_name }}.${{ matrix.platform.asset_type }} ${{ matrix.platform.bin }}
+          else
+            tar -cvf win32yoink-${{ matrix.platform.os_name }}.${{ matrix.platform.asset_type }} ${{ matrix.platform.bin }}
+          fi
+      - name: Upload binary
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.get_release.outputs.upload_url }}
+          asset_path: ./target/${{ matrix.platform.target }}/release/win32yoink-${{ matrix.platform.os_name }}.${{ matrix.platform.asset_type }}
+          asset_name: "win32yoink-${{ matrix.platform.os_name }}.${{ matrix.platform.asset_type }}"
+          asset_content_type: application/gzip
