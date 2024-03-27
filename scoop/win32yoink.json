@@ -1,0 +1,6 @@
+{
+    "version":  "latest",
+    "url":  "https://github.com/haondt/win32yoink/releases/latest/download/win32yoink-windows-x86_64.zip",
+    "bin":  "win32yoink.exe"
+}
+
