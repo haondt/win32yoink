@@ -1,17 +1,27 @@
-use clipboard_win::{ get_clipboard_string, set_clipboard_string};
+use clipboard_win::{ formats, get_clipboard_string, set_clipboard, set_clipboard_string };
 use std::io::{self, Read};
 use std::process;
 
-fn print_usage(program: &str) {
-    println!("Usage: {} [-i | -o] [--lf | --crlf] [--html]", program);
-}
+const USAGE: &str = "
+win32yoink
+
+Usage:
+    win32yoink -o [--lf]
+    win32yoink -i [--crlf] [--html]
+
+Options:
+    -o          Print clipboard contents to stdout
+    -i          Set clipboard from stdin
+    --lf        Replace CRLF with LF before printing to stdout
+    --crlf      Replace lone LF bytes with CRLF before setting the clipboard
+    --html      Set clipboard with html format
+";
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
-    let program = &args[0];
 
     if args.len() < 1 {
-        print_usage(program);
+        println!("{}", USAGE);
         process::exit(1);
     }
 
@@ -29,7 +39,7 @@ fn main() {
             "--crlf" => replace_lf = true,
             "--html" => use_html = true,
             _ => {
-                print_usage(program);
+                println!("{}", USAGE);
                 process::exit(1);
             }
         }
@@ -55,9 +65,10 @@ fn main() {
 
         if use_html {
             set_clipboard_html_string(&input);
+        } else {
+            set_clipboard_string(&input).expect("Failed to set clipboard text");
         }
 
-        set_clipboard_string(&input).expect("Failed to set clipboard text");
     }
 
     if write_to_stdout {
@@ -70,9 +81,12 @@ fn main() {
         };
 
         println!("{}", output);
+
     }
 }
 
 fn set_clipboard_html_string(text: &str) {
-    set_clipboard_string(&text).expect("ruh roh");
+    let html = formats::Html::new().expect("Failed to create html format");
+    set_clipboard_string(&text).expect("Failed to set clipboard text");
+    set_clipboard(html, &text).expect("Failed to set clipboard html");
 }
