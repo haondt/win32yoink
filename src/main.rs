@@ -1,16 +1,16 @@
-use clipboard_win::{formats, get_clipboard_string, set_clipboard_string};
+use clipboard_win::{ get_clipboard_string, set_clipboard_string};
 use std::io::{self, Read};
 use std::process;
 
 fn print_usage(program: &str) {
-    println!("Usage: {} [-i | -o] [--lf | --crlf] [--type html]", program);
+    println!("Usage: {} [-i | -o] [--lf | --crlf] [--html]", program);
 }
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
     let program = &args[0];
 
-    if args.len() < 2 {
+    if args.len() < 1 {
         print_usage(program);
         process::exit(1);
     }
@@ -27,7 +27,7 @@ fn main() {
             "-o" => write_to_stdout = true,
             "--lf" => replace_crlf = true,
             "--crlf" => replace_lf = true,
-            "--type" if args.contains(&"html".to_string()) => use_html = true,
+            "--html" => use_html = true,
             _ => {
                 print_usage(program);
                 process::exit(1);
@@ -40,16 +40,21 @@ fn main() {
         process::exit(1);
     }
 
+    // set default behavior
+    if !read_from_stdin && !write_to_stdout {
+        read_from_stdin = true;
+    }
+
     if read_from_stdin {
         let mut input = String::new();
         io::stdin().read_to_string(&mut input).expect("Failed to read from stdin");
 
         if replace_lf {
-            input = input.replace("\n", "\r\n");
+            input = input.replace("(?<!\r)\n", "\r\n");
         }
 
         if use_html {
-            // Not implemented in this example
+            set_clipboard_html_string(&input);
         }
 
         set_clipboard_string(&input).expect("Failed to set clipboard text");
@@ -68,3 +73,6 @@ fn main() {
     }
 }
 
+fn set_clipboard_html_string(text: &str) {
+    set_clipboard_string(&text).expect("ruh roh");
+}
