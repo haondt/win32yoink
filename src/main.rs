@@ -1,4 +1,4 @@
-use clipboard_win::{formats, get_clipboard, set_clipboard_string};
+use clipboard_win::{formats, get_clipboard_string, set_clipboard_string};
 use std::io::{self, Read};
 use std::process;
 
